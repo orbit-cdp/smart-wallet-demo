@@ -8,6 +8,7 @@ import {
     resetWallet,
     fundWallet,
     WalletState,
+    autoConnectWallet,
 } from "../store/walletSlice";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { StyledPaper } from "./StyledComponents";
@@ -17,11 +18,6 @@ import { InitialView } from "./InitialView";
 import { RegisterView } from "./RegisterView";
 
 type ViewState = "initial" | "connect" | "register";
-
-interface Balances {
-    native: string;
-    [key: string]: string;
-}
 
 const WalletDemo: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -34,13 +30,16 @@ const WalletDemo: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>("initial");
 
     useEffect(() => {
-        if (isConnected && !isFunded) {
-            dispatch(fundWallet());
-        }
-    }, [isConnected, isFunded, dispatch]);
+        const attemptAutoConnect = async () => {
+            setLoading(true);
+            await dispatch(autoConnectWallet());
+            setLoading(false);
+        };
+        attemptAutoConnect();
+    }, [dispatch]);
 
     useEffect(() => {
-        if (isConnected && isFunded) {
+        if (isConnected) {
             dispatch(getWalletBalance());
             setViewState("initial");
         }
@@ -79,29 +78,30 @@ const WalletDemo: React.FC = () => {
     };
 
     const renderContent = (): React.ReactNode => {
+        if (loading) {
+            return (
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "100%",
+                    }}
+                >
+                    <CircularProgress />
+                    <Typography
+                        variant="body1"
+                        sx={{ ml: 2 }}
+                    >
+                        {"Connecting..."}
+                    </Typography>
+                </Box>
+            );
+        }
+
         switch (viewState) {
             case "initial":
                 if (isConnected) {
-                    if (!isFunded) {
-                        return (
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    height: "100%",
-                                }}
-                            >
-                                <CircularProgress />
-                                <Typography
-                                    variant="body1"
-                                    sx={{ ml: 2 }}
-                                >
-                                    Funding wallet...
-                                </Typography>
-                            </Box>
-                        );
-                    }
                     return (
                         <ConnectedWallet
                             contractId={contractId || ""}

@@ -32,6 +32,26 @@ const initialState: WalletState = {
 
 const SCALAR_7 = 10_000_000;
 
+export const autoConnectWallet = createAsyncThunk(
+    "wallet/autoConnect",
+    async (_, { dispatch }) => {
+        const storedKeyId = localStorage.getItem("sp:keyId");
+        if (storedKeyId) {
+            const storedContractId = localStorage.getItem(
+                `sp:cId:${storedKeyId}`
+            );
+            if (storedContractId) {
+                dispatch(setKeyId(storedKeyId));
+                dispatch(setContractId(storedContractId));
+                dispatch(setConnected(true));
+                await dispatch(getWalletBalance());
+                return { keyId: storedKeyId, contractId: storedContractId };
+            }
+        }
+        return null;
+    }
+);
+
 export const registerWallet = createAsyncThunk(
     "wallet/register",
     async (passkeyName: string, { dispatch }) => {
@@ -51,6 +71,8 @@ export const registerWallet = createAsyncThunk(
         dispatch(setKeyId(newKeyId));
         dispatch(setContractId(cid));
         dispatch(setConnected(true));
+
+        await dispatch(fundWallet());
     }
 );
 
@@ -141,6 +163,8 @@ const walletSlice = createSlice({
             state.balances = action.payload;
         },
         resetWallet(state) {
+            localStorage.removeItem("sp:keyId");
+            if (state.keyId) localStorage.removeItem(`sp:cId:${state.keyId}`);
             state.isConnected = false;
             state.keyId = null;
             state.contractId = null;
@@ -148,8 +172,6 @@ const walletSlice = createSlice({
                 native: "",
             };
             state.isFunded = false; // Reset isFunded state
-            localStorage.removeItem("sp:keyId");
-            if (state.keyId) localStorage.removeItem(`sp:cId:${state.keyId}`);
         },
     },
     extraReducers: (builder) => {
@@ -166,6 +188,13 @@ const walletSlice = createSlice({
             .addCase(fundWallet.fulfilled, (state, action) => {
                 state.balances = action.payload;
                 state.isFunded = true; // Set isFunded to true after successful funding
+            })
+            .addCase(autoConnectWallet.fulfilled, (state, action) => {
+                if (action.payload) {
+                    state.isConnected = true;
+                    state.keyId = action.payload.keyId;
+                    state.contractId = action.payload.contractId;
+                }
             });
     },
 });
