@@ -53,10 +53,6 @@ export const ousd = sac.getSACClient(
     "CCIL2PEJSWL3VYFAJMQSY4BG2UEQ7GHTGAV5YKYNNDOTXQXLPTTBJJWW"
 );
 
-export const slp = sac.getSACClient(
-    "CC2OSY3A6DIMOTGO52IDVNXGKUTD6P32BD2U7XAOJCUVX7RQH7XTI4YE"
-);
-
 export const send_transaction = async (xdr: string, fee = 10_000) => {
     const submittingToast = toast.info("Submitting transaction...", {
         position: "top-right",

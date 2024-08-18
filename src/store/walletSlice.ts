@@ -59,7 +59,7 @@ export const registerWallet = createAsyncThunk(
             keyId: kid,
             contractId: cid,
             xdr,
-        } = await account.createWallet("Perps", passkeyName);
+        } = await account.createWallet("Demo", passkeyName);
         if (xdr) {
             await send_transaction(xdr);
         }
