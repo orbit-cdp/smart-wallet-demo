@@ -16,17 +16,22 @@ import { ConnectView } from "./ConnectView";
 import { InitialView } from "./InitialView";
 import { RegisterView } from "./RegisterView";
 
+type ViewState = "initial" | "connect" | "register";
+
+interface Balances {
+    native: string;
+    [key: string]: string;
+}
+
 const WalletDemo: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { isConnected, contractId, balances, isFunded } = useSelector<
         RootState,
         WalletState
     >((state) => state.wallet);
-    const [loading, setLoading] = useState(false);
-    const [passkeyName, setPasskeyName] = useState("");
-    const [viewState, setViewState] = useState<
-        "initial" | "connect" | "register"
-    >("initial");
+    const [loading, setLoading] = useState<boolean>(false);
+    const [passkeyName, setPasskeyName] = useState<string>("");
+    const [viewState, setViewState] = useState<ViewState>("initial");
 
     useEffect(() => {
         if (isConnected && !isFunded) {
@@ -54,7 +59,6 @@ const WalletDemo: React.FC = () => {
                 } else {
                     await dispatch(connectWallet()).unwrap();
                 }
-                // Note: We don't set viewState here anymore, it will be set in the useEffect
             } catch (error) {
                 console.error("Failed to connect:", error);
                 alert("Failed to connect. Please try again.");
@@ -69,12 +73,12 @@ const WalletDemo: React.FC = () => {
         dispatch(resetWallet());
     }, [dispatch]);
 
-    const formatBalance = (balanceStr: string) => {
+    const formatBalance = (balanceStr: string): string => {
         const balanceNum = parseFloat(balanceStr);
         return (balanceNum / 10_000_000).toFixed(7);
     };
 
-    const renderContent = () => {
+    const renderContent = (): React.ReactNode => {
         switch (viewState) {
             case "initial":
                 if (isConnected) {
@@ -125,9 +129,9 @@ const WalletDemo: React.FC = () => {
                     <RegisterView
                         loading={loading}
                         passkeyName={passkeyName}
-                        onPasskeyNameChange={(e) =>
-                            setPasskeyName(e.target.value)
-                        }
+                        onPasskeyNameChange={(
+                            e: React.ChangeEvent<HTMLInputElement>
+                        ) => setPasskeyName(e.target.value)}
                         onBackClick={() => setViewState("connect")}
                         onRegisterClick={() => handleConnect("register")}
                     />
